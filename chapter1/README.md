@@ -19,11 +19,16 @@
 ## 1.2 Transformer와 LLM의 탄생
 
 ```mermaid
-graph LR
-A[입력 문장] --> B[Encoder]
-B --> C[의미 추출]
-C --> D[Decoder]
-D --> E[출력 문장]
+graph TB
+A[입력 문장] --> B[Embedding Layer]
+B --> C[Self-Attention Mechanism]
+C --> D[Feed Forward Neural Network]
+D --> E[Encoder Output]
+E --> F[Decoder Input]
+F --> G[Self-Attention]
+G --> H[Encoder-Decoder Attention]
+H --> I[Feed Forward Neural Network]
+I --> J[출력 문장]
 ```
 
 - **BERT**: Encoder만 사용 → 문맥 이해
@@ -47,11 +52,11 @@ D --> E[출력 문장]
 
 ## 1.5 주요 상용 LLM 소개
 
-| 모델 | 특징 |
-|:---|:---|
-| OpenAI GPT | 이미지, 음성 인식/생성, 추론 능력 탁월 |
-| Google Gemini | 긴 컨텍스트 지원, 멀티모달 성능 우수 |
-| Anthropic Claude 3.5 | SVG/HTML/JS 생성, 컴퓨터 에이전트 특화 |
+| 모델 | 파라미터 수 | 특징 | 컨텍스트 길이 | 멀티모달 지원 |
+|:---|:---|:---|:---|:---|
+| OpenAI GPT-4o | 수백억+ | 이미지, 음성, 추론 모두 강력 | 수십만 토큰 | O |
+| Google Gemini 2.0 | 1-2M 토큰 | 긴 컨텍스트, 강력한 멀티모달 | 1-2M 토큰 | O |
+| Anthropic Claude 3.5 | 수십억+ | Artifact 생성, 고급 추론 | 수십만 토큰 | X |
 
 
 ## 1.6 오픈웨이트(Open-Weight) LLMs
@@ -153,5 +158,5 @@ A --> E[PEFT 학습]
 
 ---
 
-✅ 다이어그램을 추가하여 흐름이 더욱 명확해졌습니다.
+✅ 다이어그램과 표를 추가하여 이해를 더욱 쉽게 구성했습니다.
 ✅ 다음 챕터로 넘어가거나, 추가 요청 사항을 알려주세요!
