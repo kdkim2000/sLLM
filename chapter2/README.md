@@ -69,7 +69,7 @@ graph TD
     PromptStep[Prompt Template 생성]
     LLMInvoke[LLM 호출]
     ParsingStep[출력 파싱]
-    OptionalFunction[함수 호출 (Tool)]
+    OptionalFunction[함수 호출 - Tool]
     FinalLLM[추가 LLM 호출]
     FinalOutput[최종 응답]
 
