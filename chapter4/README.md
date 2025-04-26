@@ -141,5 +141,191 @@ trainer.train()
 
 ---
 
-✅ 표, 다이어그램, 코드 예제, 최적화 가이드까지 포함해 Chapter 4를 체계적으로 정리했습니다.
-✅ 추가로 "Instruction Tuning 실습"이나 "Style Tuning 방법"도 이어서 확장 가능합니다!
+## 4.9 Instruction Tuning 실습 예제
+
+**Instruction Tuning**은 사용자가 입력하는 명령어(instruction)에 대해 모델이 적절하게 응답하도록 학습시키는 방법입니다.
+
+Instruction 데이터셋 예시:
+
+```json
+{
+  "instruction": "다음 문장을 영어로 번역해줘.",
+  "input": "안녕하세요, 좋은 하루 되세요.",
+  "output": "Hello, have a nice day."
+}
+```
+
+
+### Python 실습 코드 (Instruction Tuning 기반)
+
+```python
+from transformers import AutoModelForSeq2SeqLM, Seq2SeqTrainer, Seq2SeqTrainingArguments, AutoTokenizer
+from datasets import load_dataset
+
+# 사전학습 모델과 토크나이저 로드
+model_name = "google/flan-t5-small"
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# 예시 데이터셋 (huggingface/datasets로 대체 가능)
+data = [
+    {"instruction": "한국어를 영어로 번역해줘.", "input": "안녕하세요.", "output": "Hello."},
+    {"instruction": "숫자 2와 3을 더해줘.", "input": "2 + 3", "output": "5"}
+]
+
+def preprocess_function(example):
+    prompt = f"Instruction: {example['instruction']}\nInput: {example['input']}\nResponse:"
+    inputs = tokenizer(prompt, max_length=256, truncation=True)
+    labels = tokenizer(example['output'], max_length=256, truncation=True)
+    inputs["labels"] = labels["input_ids"]
+    return inputs
+
+# 데이터셋 변환
+from datasets import Dataset
+train_dataset = Dataset.from_list(data)
+train_dataset = train_dataset.map(preprocess_function)
+
+# 학습 파라미터 설정
+training_args = Seq2SeqTrainingArguments(
+    output_dir="./instruction_tuned_model",
+    per_device_train_batch_size=4,
+    num_train_epochs=3,
+    learning_rate=2e-4,
+    logging_dir="./logs",
+    save_total_limit=1,
+    evaluation_strategy="no"
+)
+
+# Trainer 설정
+trainer = Seq2SeqTrainer(
+    model=model,
+    args=training_args,
+    train_dataset=train_dataset
+)
+
+# 학습 시작
+trainer.train()
+```
+
+
+### 학습 구조 요약
+
+```mermaid
+graph TD
+Instruction+Input --> Preprocessing
+Preprocessing --> FineTuning(Seq2Seq Trainer)
+FineTuning --> InstructionTunedModel
+```
+
+
+### 실습 요약
+
+| 항목 | 설명 |
+|:---|:---|
+| 모델 | Flan-T5-small (Instruction 기반 Pretrained 모델) |
+| 입력 | Instruction + Input 조합 |
+| 출력 | Response (정답) |
+| 방식 | Seq2Seq Fine Tuning |
+
+> ✅ 실제 프로젝트에서는 이 구조를 기반으로 수천~수십만 개의 Instruction 데이터를 이용해 Fine Tuning을 진행합니다.
+
+
+## 4.10 QLoRA(Quantized LoRA) 소개 및 실습
+
+**QLoRA**는 "Quantized Low-Rank Adaptation"의 약자로, 
+모델을 4-bit로 양자화(Quantization)한 후, LoRA로 추가 학습하는 고급 Fine Tuning 기법입니다.
+
+기존 LoRA 대비 **메모리 사용량을 극적으로 줄이면서도** 성능을 유지하거나 향상할 수 있습니다.
+
+
+### QLoRA 구조 개요
+
+```mermaid
+graph TD
+A[4-bit Quantized Model] --> B[LoRA Adapters 추가 학습]
+B --> C[QLoRA Tuned Model]
+```
+
+| 항목 | LoRA | QLoRA |
+|:---|:---|:---|
+| 메모리 절감 | O | ◎ (더 절감) |
+| 학습 정확도 | 높음 | 비슷하거나 향상 |
+| 연산 속도 | 빠름 | 조금 더 느릴 수 있음 (4bit 연산) |
+| 사용 환경 | 24GB VRAM 필요 | 16GB 이하에서도 가능 |
+
+
+### QLoRA 실습 예제 코드 (최신 Huggingface/PEFT)
+
+```python
+from peft import LoraConfig, get_peft_model
+from transformers import BitsAndBytesConfig, AutoModelForCausalLM, Trainer, TrainingArguments
+from transformers import AutoTokenizer
+
+# 모델 양자화 설정 (bnb_config)
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",  # Normal Float 4bit
+    bnb_4bit_compute_dtype="bfloat16"
+)
+
+# 모델과 토크나이저 로드
+model_name = "facebook/opt-125m"
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    quantization_config=bnb_config,
+    device_map="auto"
+)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# LoRA 설정
+config = LoraConfig(
+    r=8, lora_alpha=16, target_modules=["q_proj", "v_proj"], lora_dropout=0.1, bias="none"
+)
+model = get_peft_model(model, config)
+
+# 학습 설정
+training_args = TrainingArguments(
+    output_dir="./qlora_model",
+    per_device_train_batch_size=8,
+    learning_rate=2e-4,
+    num_train_epochs=3,
+    save_total_limit=1,
+    logging_dir="./logs",
+    optim="paged_adamw_32bit"  # 대규모 양자화 모델 최적화
+)
+
+# Trainer로 학습 진행
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=your_train_dataset  # 실제 데이터셋 필요
+)
+
+trainer.train()
+```
+
+
+### QLoRA 핵심 포인트 요약
+
+| 포인트 | 설명 |
+|:---|:---|
+| 4-bit 양자화 | VRAM 절감 및 로딩 속도 향상 |
+| NF4 포맷 | 4bit 정규화 분포로 양자화하여 정보 보존 |
+| bfloat16 연산 | 안정적이고 빠른 4bit 연산 지원 |
+| Optimizer | paged_adamw_32bit 최적화기 사용 추천 |
+
+> ✅ QLoRA는 16GB VRAM 노트북/클라우드 환경에서도 대규모 모델 파인튜닝을 가능하게 합니다.
+
+
+---
+
+# 📌 요약 키워드 (업데이트)
+
+- Fine Tuning
+- Instruction Tuning
+- LoRA (Low-Rank Adaptation)
+- QLoRA (Quantized LoRA)
+- 4-bit Quantization
+- PEFT
+
+---
