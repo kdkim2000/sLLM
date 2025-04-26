@@ -23,9 +23,14 @@ Fine Tuning은 기존에 사전 학습된(Pretrained) LLM 모델에 대해,
 
 ```mermaid
 graph TD
-A[Pretrained Model] --> B[Fine Tuning 데이터 준비]
-B --> C[모델 학습 (Fine Tuning)]
-C --> D[Fine Tuned Model]
+    A[Pretrained Model]
+    B[Fine Tuning 데이터 준비]
+    C[모델 학습 Fine Tuning]
+    D[Fine Tuned Model]
+
+    A --> B
+    B --> C
+    C --> D
 ```
 
 **요약**:
@@ -59,7 +64,7 @@ C --> D[Fine Tuned Model]
 ```mermaid
 graph TD
 W[Pretrained Weights (W)] --> BA[Low-rank Matrix A & B 추가]
-BA --> Wnew[Modified Weights (W + BA)]
+BA --> Wnew[Modified Weights W + BA ]
 ```
 
 **핵심 아이디어**:
