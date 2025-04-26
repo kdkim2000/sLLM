@@ -63,8 +63,8 @@ graph TD
 
 ```mermaid
 graph TD
-W[Pretrained Weights (W)] --> BA[Low-rank Matrix A & B 추가]
-BA --> Wnew[Modified Weights W + BA ]
+W[Pretrained Weights - W] --> BA[Low-rank Matrix A & B 추가]
+BA --> Wnew[Modified Weights - W + BA ]
 ```
 
 **핵심 아이디어**:
