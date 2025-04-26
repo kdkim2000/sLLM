@@ -1,31 +1,87 @@
-# sLLM 과정 정리
+# sLLM 과정 학습 정리
 
-이 저장소는 "**sLLM 과정 교재**"를 기반으로 주요 내용을 체계적으로 정리한 자료입니다.
-각 챕터는 별도 폴더에 구성되어 있으며, 필요한 내용을 빠르게 탐색하고 학습할 수 있도록 설계되었습니다.
+이 문서는 "**sLLM 과정**" 전체 학습 내용을 깔끔하게 정리한 최종 요약본입니다.
+각 Chapter 별 핵심 요약과 실습 포인트를 담았습니다.
 
-## 📚 전체 구성
+---
 
-| 챕터 번호 | 주제 | 링크 |
-|:---:|:---|:---|
-| Chapter 1 | Introduction | [바로가기](./chapter1/README.md) |
-| Chapter 2 | LangChain | [바로가기](./chapter2/README.md) |
-| Chapter 3 | RAG (Retrieval Augmented Generation) | [바로가기](./chapter3/README.md) |
-| Chapter 4 | Fine Tuning | [바로가기](./chapter4/README.md) |
-| Chapter 5 | Serving / Deployment | [바로가기](./chapter5/README.md) |
+## 📚 Chapter별 구성
 
+### Chapter 1 | Introduction
 
-## 🛠️ 활용 방법
+- Transformer 구조 (인코더-디코더)
+- GPT, BERT 모델 발전사
+- 오픈웨이트(Open-Weight) 모델 vs 클로즈드 모델
+- sLLM (Small LLM) 개념 소개
+- LLM 최신 트렌드 요약
 
-- 각 챕터별 `README.md` 파일을 열어 내용을 학습합니다.
-- 실습이 포함된 경우, 직접 코드를 작성하거나 예제를 따라 해봅니다.
-- 필요시, 오픈 소스 모델이나 데이터셋 링크를 참고하여 추가 학습을 진행할 수 있습니다.
+➡️ [자세히 보기](./chapter1/README.md)
 
 
-## ✨ 향후 계획
+### Chapter 2 | LangChain
 
-- 주요 개념에 대한 그림 및 다이어그램 추가
-- 실습 예제 코드 보완 및 샘플 프로젝트 연동
-- 최신 LLM 및 Fine Tuning 연구 반영 (2025 업데이트 예정)
+- LangChain 프레임워크 소개
+- LCEL (LangChain Expression Language) 개념
+- Prompt → LLM → Parser 체인 구조 이해
+- 문서 검색 챗봇, 외부 API 연결 챗봇 실습
+
+➡️ [자세히 보기](./chapter2/README.md)
+
+
+### Chapter 3 | RAG (Retrieval Augmented Generation)
+
+- RAG 구조: 검색 → 프롬프트 강화 → 생성
+- Semantic, Lexical, Hybrid Search 비교
+- MMR 튜닝 전략과 평가 지표 설명
+- 다양한 RAG 아키텍처 (RAG-Fusion, Multi-Stage 등)
+- 실습: Chroma + LangChain으로 RAG 구축
+
+➡️ [자세히 보기](./chapter3/README.md)
+
+
+### Chapter 4 | Fine Tuning
+
+- Fine Tuning과 PEFT(LoRA, QLoRA) 이해
+- Instruction Tuning, Style Tuning 실습
+- 학습률, 배치 크기, Epoch 등 하이퍼파라미터 튜닝 전략
+- 실습: LoRA/QLoRA 적용 학습, Instruction 데이터 기반 튜닝
+
+➡️ [자세히 보기](./chapter4/README.md)
+
+
+### Chapter 5 | Serving / Deployment
+
+- Serving 전략: FastAPI, vLLM 고속 서버 구축
+- 모델 최적화(Quantization, Caching)
+- Docker로 배포, Kubernetes로 확장 자동화
+- Streaming 응답 구조 구현
+- Multi-Model Serving 구조 (요청별 모델 라우팅)
+
+➡️ [자세히 보기](./chapter5/README.md)
+
+
+---
+
+## 🛠️ 실습 프로젝트 예시 (추천)
+
+- FastAPI 기반 LLM API 서버 만들기
+- Docker + Kubernetes를 통한 모델 서비스 배포
+- Chroma + LangChain 기반 검색 강화 챗봇 구축
+- LoRA/QLoRA 기반 맞춤형 Instruction Tuning 모델 개발
+
+
+## 🏆 최종 목표
+
+- 오픈모델 기반 LLM 실전 프로젝트 독자 수행 능력 확보
+- 튜닝-서빙-최적화-배포까지 **엔드투엔드(End-to-End)** 이해 및 실습
+
+
+---
+
+> 본 문서는 **sLLM 전문 과정**의 총 학습 정리용입니다.
+> 추후 버전 업데이트 시, 최신 아키텍처와 사례를 추가할 예정입니다.
+
+---
 
 
 ## 📢 참고 자료
@@ -38,4 +94,3 @@
 
 ---
 
-> 본 저장소는 개인 학습 및 지식 정리를 목적으로 제작되었습니다. 자유롭게 포크(Fork) 및 수정하여 활용하세요. 🚀
