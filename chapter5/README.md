@@ -114,6 +114,244 @@ python3 -m vllm.entrypoints.openai.api_server \
 - 배포 최적화 전략
 
 ---
+## 5.7 Docker를 이용한 모델 배포
 
-✅ Chapter 5 초안을 체계적으로 정리했습니다: 표, 흐름도, FastAPI/vLLM 예제 포함.
-✅ 추가로 "Docker 기반 배포"나 "Streaming Inference 구조" 확장도 가능합니다!
+**Docker**는 모델과 서버 코드를 컨테이너로 패키징하여 어디서든 동일한 환경으로 실행할 수 있도록 합니다.
+
+### Dockerfile 작성 예시 (FastAPI + 모델 서버)
+
+```dockerfile
+# 베이스 이미지
+FROM python:3.10-slim
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# 필요 패키지 설치
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 코드 복사
+COPY . .
+
+# FastAPI 서버 실행
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+**requirements.txt 예시**:
+```text
+fastapi
+uvicorn
+transformers
+```
+
+### 빌드 및 실행 명령어
+
+```bash
+# Docker 이미지 빌드
+docker build -t llm-server .
+
+# Docker 컨테이너 실행
+docker run -p 8000:8000 llm-server
+```
+
+> ✅ Docker를 사용하면 어디서든 동일한 환경에서 Serving이 가능합니다.
+
+
+## 5.8 Kubernetes를 이용한 확장형 배포
+
+**Kubernetes**는 컨테이너를 대규모로 관리할 수 있는 플랫폼입니다.
+
+### 기본 구성 요소
+
+| 요소 | 설명 |
+|:---|:---|
+| Deployment | 컨테이너 애플리케이션 배포 관리 |
+| Service | 외부 접근을 위한 네트워크 추상화 |
+| HPA (Horizontal Pod Autoscaler) | 부하에 따라 자동 스케일링 |
+
+
+### 간단한 Deployment YAML 예시
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-server-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: llm-server
+  template:
+    metadata:
+      labels:
+        app: llm-server
+    spec:
+      containers:
+      - name: llm-server
+        image: llm-server:latest
+        ports:
+        - containerPort: 8000
+```
+
+### Service YAML 예시
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm-server-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: llm-server
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+```
+
+> ✅ Kubernetes를 이용하면 고가용성(HA) 및 자동 복구, 자동 확장이 가능합니다.
+
+
+## 5.9 Streaming 응답 구조
+
+**Streaming**은 LLM 응답을 한 번에 반환하는 대신, **조각(chunk) 단위로 실시간 전송**하는 방법입니다.
+
+### Streaming이 필요한 이유
+- 긴 답변을 빠르게 시작할 수 있음
+- 사용자 체감 속도 개선
+- 대화형 애플리케이션에서 필수
+
+
+### FastAPI 기반 Streaming 예제
+
+```python
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+
+app = FastAPI()
+
+def fake_streaming_response(prompt: str):
+    words = prompt.split()
+    for word in words:
+        yield word + " "
+
+@app.get("/stream")
+async def stream_text(prompt: str):
+    return StreamingResponse(fake_streaming_response(prompt), media_type="text/plain")
+```
+
+### Streaming 구조 흐름
+
+```mermaid
+graph TD
+Client --> API[Streaming API 호출]
+API --> StreamChunks[단어/문장 단위 전송]
+StreamChunks --> Client[실시간 표시]
+```
+
+> ✅ FastAPI의 `StreamingResponse`를 사용하면 손쉽게 구현 가능하며, 최신 vLLM, Huggingface Inference Endpoints 등도 streaming을 지원합니다.
+
+
+---
+
+# 📌 추가 요약 키워드 (Serving 심화)
+
+- Docker
+- Kubernetes (K8s)
+- Horizontal Scaling
+- Streaming Response
+- Realtime Inference
+
+---
+
+## 5.10 Multi-Model Serving 구조
+
+**Multi-Model Serving**은 하나의 시스템 또는 서버에서 **여러 개의 모델을 동시에 관리하고 제공**하는 방식입니다.
+
+### 왜 필요한가?
+- 다양한 업무(task)에 최적화된 모델 제공 (예: 번역 모델, 요약 모델 분리)
+- 리소스 효율화 (모델 크기에 따라 자원 할당)
+- 사용자 요구에 따른 유연한 라우팅
+
+
+### Multi-Model Serving 기본 흐름
+
+```mermaid
+graph TD
+UserRequest --> Router[요청 라우터]
+Router --> ModelA[모델 A]
+Router --> ModelB[모델 B]
+Router --> ModelC[모델 C]
+ModelA --> ResponseA
+ModelB --> ResponseB
+ModelC --> ResponseC
+ResponseA --> UserRequest
+ResponseB --> UserRequest
+ResponseC --> UserRequest
+```
+
+- **Router**: 요청을 분석하고 적절한 모델로 전달
+- **모델들**: 다양한 목적을 가진 독립 모델 (A, B, C)
+- **응답 반환**: 모델별 결과를 사용자에게 반환
+
+
+### 구현 전략
+
+| 방법 | 설명 |
+|:---|:---|
+| 단일 서버 멀티 모델 로드 | 메모리가 충분할 경우 하나의 서버에 여러 모델 로딩 |
+| 모델별 별도 서버 운영 | 모델 크기가 크거나 부하가 높은 경우 별도 컨테이너로 분리 |
+| Gateway/API 라우팅 | FastAPI Router 또는 Kubernetes Ingress Controller 이용
+
+
+### FastAPI 예제 (간단한 모델 라우팅)
+
+```python
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class Request(BaseModel):
+    prompt: str
+    model_name: str
+
+@app.post("/generate")
+async def generate_text(request: Request):
+    if request.model_name == "gpt2":
+        result = gpt2_pipeline(request.prompt)
+    elif request.model_name == "flan-t5":
+        result = flan_t5_pipeline(request.prompt)
+    else:
+        return {"error": "모델을 찾을 수 없습니다."}
+    return {"result": result}
+
+# 각각의 pipeline은 사전에 준비되어야 합니다.
+```
+
+> ✅ 이처럼 요청 시 model_name에 따라 다른 모델을 호출하는 구조를 쉽게 구현할 수 있습니다.
+
+
+### 고려사항
+
+| 항목 | 설명 |
+|:---|:---|
+| 메모리 사용량 | 여러 모델을 로드할 경우 VRAM/메모리 초과 주의 |
+| 지연 시간 | 초기 로딩 또는 교체 시 Latency 발생 가능 |
+| 버전 관리 | 모델 버전별 구분 필요 (e.g., gpt2-v1, gpt2-v2)
+| 모니터링 | 모델별 사용량, 실패율, 응답 시간 추적
+
+
+---
+
+# 📌 추가 요약 키워드 (Serving 심화2)
+
+- Multi-Model Serving
+- Router 기반 모델 분기
+- 모델별 리소스 최적화
+- FastAPI Routing
+
+---
