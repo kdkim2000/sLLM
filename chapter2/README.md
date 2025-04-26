@@ -65,13 +65,21 @@ llm = HuggingFaceHub(repo_id="google/flan-t5-large", model_kwargs={"temperature"
 
 ```mermaid
 graph TD
-UserInput[사용자 입력] --> PromptStep[Prompt Template 생성]
-PromptStep --> LLMInvoke[LLM 호출]
-LLMInvoke --> ParsingStep[출력 파싱]
-ParsingStep -->|필요시| OptionalFunction[함수 호출 (Tool)]
-OptionalFunction -->|옵션| FinalLLM[추가 LLM 호출]
-FinalLLM --> FinalOutput[최종 응답]
-ParsingStep -->|또는| FinalOutput
+    UserInput[사용자 입력]
+    PromptStep[Prompt Template 생성]
+    LLMInvoke[LLM 호출]
+    ParsingStep[출력 파싱]
+    OptionalFunction[함수 호출 (Tool)]
+    FinalLLM[추가 LLM 호출]
+    FinalOutput[최종 응답]
+
+    UserInput --> PromptStep
+    PromptStep --> LLMInvoke
+    LLMInvoke --> ParsingStep
+    ParsingStep --> OptionalFunction
+    OptionalFunction --> FinalLLM
+    FinalLLM --> FinalOutput
+    ParsingStep --> FinalOutput
 ```
 
 - 체인은 다음과 같은 순서로 구성됩니다:
@@ -87,8 +95,7 @@ ParsingStep -->|또는| FinalOutput
 - **실제 어플리케이션 구성 시 고려사항**:
   - 프롬프트 엔지니어링 중요성
   - 입력/출력 형식 일관성 유지
-  - 오류 발생 시 적절한 Fallback 처
-
+  - 오류 발생 시 적절한 Fallback 처리
 
 ## 2.6 LCEL (LangChain Expression Language)
 
